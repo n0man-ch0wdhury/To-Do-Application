@@ -13,7 +13,8 @@ import {
   Checkbox, 
   Divider, 
   CircularProgress,
-  Alert
+  Alert,
+  Grid
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Save as SaveIcon, Cancel as CancelIcon } from '@mui/icons-material';
 import axios from 'axios';
@@ -144,6 +145,111 @@ const TodoList = () => {
     setEditFormData({ title: '', description: '', completed: false });
   };
 
+  // Filter todos into complete and incomplete
+  const completedTodos = todos.filter(todo => todo.completed);
+  const incompleteTodos = todos.filter(todo => !todo.completed);
+
+  // Render todo item (used for both complete and incomplete lists)
+  const renderTodoItem = (todo) => (
+    <React.Fragment key={todo.id}>
+      {editingTodo && editingTodo.id === todo.id ? (
+        <ListItem>
+          <Box component="form" onSubmit={handleUpdateTodo} sx={{ width: '100%' }}>
+            <TextField
+              margin="dense"
+              required
+              fullWidth
+              name="title"
+              label="Title"
+              value={editFormData.title}
+              onChange={handleEditFormChange}
+            />
+            <TextField
+              margin="dense"
+              fullWidth
+              name="description"
+              label="Description"
+              multiline
+              rows={2}
+              value={editFormData.description}
+              onChange={handleEditFormChange}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <Checkbox
+                checked={editFormData.completed}
+                onChange={handleEditFormChange}
+                name="completed"
+              />
+              <Typography variant="body2">Completed</Typography>
+            </Box>
+            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                size="small"
+                startIcon={<SaveIcon />}
+                disabled={loading}
+              >
+                Save
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<CancelIcon />}
+                onClick={cancelEditing}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </Box>
+        </ListItem>
+      ) : (
+        <ListItem>
+          <Checkbox
+            edge="start"
+            checked={todo.completed}
+            onChange={() => handleToggleComplete(todo)}
+            disabled={loading}
+          />
+          <ListItemText
+            primary={
+              <Typography
+                variant="body1"
+                style={{
+                  textDecoration: todo.completed ? 'line-through' : 'none',
+                  color: todo.completed ? 'text.secondary' : 'text.primary'
+                }}
+              >
+                {todo.title}
+              </Typography>
+            }
+            secondary={todo.description}
+          />
+          <ListItemSecondaryAction>
+            <IconButton
+              edge="end"
+              aria-label="edit"
+              onClick={() => startEditing(todo)}
+              disabled={loading}
+            >
+              <EditIcon />
+            </IconButton>
+            <IconButton
+              edge="end"
+              aria-label="delete"
+              onClick={() => handleDeleteTodo(todo.id)}
+              disabled={loading}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </ListItemSecondaryAction>
+        </ListItem>
+      )}
+      <Divider />
+    </React.Fragment>
+  );
+
   return (
     <Box>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -194,120 +300,52 @@ const TodoList = () => {
         </Box>
       </Paper>
 
-      {/* Todo list */}
-      <Paper elevation={3} sx={{ p: 0 }}>
-        <List>
-          {loading && todos.length === 0 ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
+      {/* Todo lists in grid layout */}
+      <Grid container spacing={3}>
+        {/* Incomplete Todos Card */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 0, height: '100%' }}>
+            <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
+              <Typography variant="h6">Incomplete Todos</Typography>
             </Box>
-          ) : todos.length === 0 ? (
-            <ListItem>
-              <ListItemText primary="No todos yet. Add one above!" />
-            </ListItem>
-          ) : (
-            todos.map((todo) => (
-              <React.Fragment key={todo.id}>
-                {editingTodo && editingTodo.id === todo.id ? (
-                  <ListItem>
-                    <Box component="form" onSubmit={handleUpdateTodo} sx={{ width: '100%' }}>
-                      <TextField
-                        margin="dense"
-                        required
-                        fullWidth
-                        name="title"
-                        label="Title"
-                        value={editFormData.title}
-                        onChange={handleEditFormChange}
-                      />
-                      <TextField
-                        margin="dense"
-                        fullWidth
-                        name="description"
-                        label="Description"
-                        multiline
-                        rows={2}
-                        value={editFormData.description}
-                        onChange={handleEditFormChange}
-                      />
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <Checkbox
-                          checked={editFormData.completed}
-                          onChange={handleEditFormChange}
-                          name="completed"
-                        />
-                        <Typography variant="body2">Completed</Typography>
-                      </Box>
-                      <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          size="small"
-                          startIcon={<SaveIcon />}
-                          disabled={loading}
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<CancelIcon />}
-                          onClick={cancelEditing}
-                          disabled={loading}
-                        >
-                          Cancel
-                        </Button>
-                      </Box>
-                    </Box>
-                  </ListItem>
-                ) : (
-                  <ListItem>
-                    <Checkbox
-                      edge="start"
-                      checked={todo.completed}
-                      onChange={() => handleToggleComplete(todo)}
-                      disabled={loading}
-                    />
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body1"
-                          style={{
-                            textDecoration: todo.completed ? 'line-through' : 'none',
-                            color: todo.completed ? 'text.secondary' : 'text.primary'
-                          }}
-                        >
-                          {todo.title}
-                        </Typography>
-                      }
-                      secondary={todo.description}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        aria-label="edit"
-                        onClick={() => startEditing(todo)}
-                        disabled={loading}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() => handleDeleteTodo(todo.id)}
-                        disabled={loading}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                )}
-                <Divider />
-              </React.Fragment>
-            ))
-          )}
-        </List>
-      </Paper>
+            <List>
+              {loading && todos.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : incompleteTodos.length === 0 ? (
+                <ListItem>
+                  <ListItemText primary="No incomplete todos. Great job!" />
+                </ListItem>
+              ) : (
+                incompleteTodos.map(renderTodoItem)
+              )}
+            </List>
+          </Paper>
+        </Grid>
+
+        {/* Completed Todos Card */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 0, height: '100%' }}>
+            <Box sx={{ p: 2, bgcolor: 'success.main', color: 'white' }}>
+              <Typography variant="h6">Completed Todos</Typography>
+            </Box>
+            <List>
+              {loading && todos.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : completedTodos.length === 0 ? (
+                <ListItem>
+                  <ListItemText primary="No completed todos yet. Keep going!" />
+                </ListItem>
+              ) : (
+                completedTodos.map(renderTodoItem)
+              )}
+            </List>
+          </Paper>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
